@@ -24,11 +24,7 @@ namespace AdjustableCommercialConsumption
         }
 
         public float CommercialGoodsMultiplier;
-        /*
-        public static int[] UpdateFrequencyOpt = new int[] { 0, 1, 2, 3, 5 };
-        public static string[] UpdateFrequencyOptStr = new string[] { "60/sec", "30/sec", "20/sec", "15/sec", "10/sec" };
-        public int UpdateFrequency;
-        */
+        public float IndustrialGoodsMultiplier;
 
         public bool pauseRefillEnable;
         public bool DebugConsolePrint;
@@ -37,22 +33,11 @@ namespace AdjustableCommercialConsumption
         public ACC_Options()
         {
             CommercialGoodsMultiplier = 1;
-            //UpdateFrequency = 0;
+            IndustrialGoodsMultiplier = 1;
             pauseRefillEnable = true;
             DebugConsolePrint = false;
             refillBuildingsEnable = false;
         }
-
-        /*
-        public int GetUpdateFrequencyOptIndex()
-        {
-            int index = Array.IndexOf(UpdateFrequencyOpt, UpdateFrequency);
-
-            if (index == -1) return Array.IndexOf(UpdateFrequencyOpt, 1);
-
-            return index;
-        }
-        */
 
         public void Save()
         {
@@ -65,7 +50,7 @@ namespace AdjustableCommercialConsumption
             }
             catch (Exception ex)
             {
-                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Adjustable Com. Consumption: " + ex.Message);
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Adjustable Bus. Consumption: " + ex.Message);
             }
         }
 
@@ -84,7 +69,7 @@ namespace AdjustableCommercialConsumption
             }
             catch (Exception ex)
             {
-                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Adjustable Com. Consumption: " + ex.Message);
+                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, "Adjustable Bus. Consumption: " + ex.Message);
 
                 return new ACC_Options();
             }

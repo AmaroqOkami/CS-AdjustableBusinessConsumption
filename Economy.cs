@@ -13,10 +13,20 @@ namespace AdjustableCommercialConsumption
         private readonly SimulationManager simulationManager;
         private CoTimer debugTimerIns;
 
-        private static Dictionary<ushort, int> buildingGoodsCount = new Dictionary<ushort, int>();
+        private static Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
+        private static Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
+
+        public static readonly TransferManager.TransferReason[] industryGoods =
+            { TransferManager.TransferReason.Oil,
+              TransferManager.TransferReason.Coal,
+              TransferManager.TransferReason.Grain,
+              TransferManager.TransferReason.Logs,
+              TransferManager.TransferReason.Petrol,
+              TransferManager.TransferReason.Ore,
+              TransferManager.TransferReason.Food,
+              TransferManager.TransferReason.Lumber };
 
         private static bool hasStarted = false;
-        //private static short GoodsClock = 0;
         private int refTransferAmt = 0;
 
         public static int GoodsReplenishAmount = 0;
@@ -24,6 +34,12 @@ namespace AdjustableCommercialConsumption
         public static int GoodsTotalAmount = 0;
         public static int GoodsReadAmount = 0;
         public static int GoodsNewAmount = 0;
+
+        public static int indGoodsReplenishAmount = 0;
+        public static int indGoodsOldTotalAmount = 0;
+        public static int indGoodsTotalAmount = 0;
+        public static int indGoodsReadAmount = 0;
+        public static int indGoodsNewAmount = 0;
 
 
         public GoodsMonitor()
@@ -41,15 +57,13 @@ namespace AdjustableCommercialConsumption
                 debugTimerIns.StartCoroutine("DebugTimer");
             }
 
-            //GoodsClock++;
-            //if (GoodsClock > ACC_Options.Instance.UpdateFrequency)
             GoodsCheck();
         }
 
-        public void GoodsCheck()//override void OnAfterSimulationTick()
+        public void GoodsCheck()
         {
 
-            if (ACC_Options.Instance.CommercialGoodsMultiplier != 1.0f && (ACC_Options.Instance.pauseRefillEnable || !simulationManager.SimulationPaused))
+            if (ACC_Options.Instance.pauseRefillEnable || !simulationManager.SimulationPaused)
             {
 
                 Building building;
@@ -74,9 +88,9 @@ namespace AdjustableCommercialConsumption
                         int addAmount = 0;
                         int amount = building.m_customBuffer1;
 
-                        if (!ACC_Options.Instance.refillBuildingsEnable && buildingGoodsCount.TryGetValue(buildingId, out int oldAmount))
+                        if (!ACC_Options.Instance.refillBuildingsEnable && comGoodsCount.TryGetValue(buildingId, out int oldAmount))
                         {
-                            if (amount < oldAmount)
+                            if (ACC_Options.Instance.CommercialGoodsMultiplier != 1.0f && amount < oldAmount)
                             {
                                 int amountDelta = amount - oldAmount;
                                 addAmount = System.Math.Abs(amountDelta) + (int)(amountDelta * ACC_Options.Instance.CommercialGoodsMultiplier);
@@ -84,7 +98,7 @@ namespace AdjustableCommercialConsumption
                                 ResupplyBuilding(buildingId, ai, TransferManager.TransferReason.Goods, addAmount);
 
                                 int curAmt = buildingManager.m_buildings.m_buffer[buildingId].m_customBuffer1;
-                                buildingGoodsCount[buildingId] = curAmt;
+                                comGoodsCount[buildingId] = curAmt;
 
                                 if (ACC_Options.Instance.DebugConsolePrint)
                                 {
@@ -96,7 +110,7 @@ namespace AdjustableCommercialConsumption
                             }
                             else
                             {
-                                buildingGoodsCount[buildingId] = amount;
+                                comGoodsCount[buildingId] = amount;
                                 GoodsReadAmount++;
                             }
                         }
@@ -116,8 +130,60 @@ namespace AdjustableCommercialConsumption
                         }
                         else
                         {
-                            buildingGoodsCount.Add(buildingId, amount);
+                            comGoodsCount.Add(buildingId, amount);
                             GoodsNewAmount++;
+                        }
+                    }
+                    else if (ai is IndustrialBuildingAI)
+                    {
+                        //Resupply building based on delta between current tick and last tick.
+                        int addAmount = 0;
+                        int amount = building.m_customBuffer1;
+
+                        if (!ACC_Options.Instance.refillBuildingsEnable && indGoodsCount.TryGetValue(buildingId, out int oldAmount))
+                        {
+                            if (ACC_Options.Instance.IndustrialGoodsMultiplier != 1.0f && amount < oldAmount)
+                            {
+                                int amountDelta = amount - oldAmount;
+                                addAmount = System.Math.Abs(amountDelta) + (int)(amountDelta * ACC_Options.Instance.IndustrialGoodsMultiplier);
+
+                                ResupplyIndustrialBuilding(buildingId, ai, addAmount);
+
+                                int curAmt = buildingManager.m_buildings.m_buffer[buildingId].m_customBuffer1;
+                                indGoodsCount[buildingId] = curAmt;
+
+                                if (ACC_Options.Instance.DebugConsolePrint)
+                                {
+                                    indGoodsReplenishAmount += addAmount;
+                                    indGoodsOldTotalAmount += oldAmount;
+                                    indGoodsTotalAmount += curAmt;
+                                    indGoodsReadAmount++;
+                                }
+                            }
+                            else
+                            {
+                                indGoodsCount[buildingId] = amount;
+                                indGoodsReadAmount++;
+                            }
+                        }
+                        else if (ACC_Options.Instance.refillBuildingsEnable)
+                        {
+                            ResupplyIndustrialBuilding(buildingId, ai, 10000);
+
+                            if (ACC_Options.Instance.DebugConsolePrint)
+                            {
+                                int curAmt = buildingManager.m_buildings.m_buffer[buildingId].m_customBuffer1;
+
+                                indGoodsNewAmount++;
+                                indGoodsReplenishAmount += curAmt - amount;
+                                indGoodsOldTotalAmount += amount;
+                                indGoodsTotalAmount += curAmt;
+                            }
+                        }
+                        else
+                        {
+                            indGoodsCount.Add(buildingId, amount);
+                            indGoodsNewAmount++;
                         }
                     }
                 }
@@ -128,6 +194,12 @@ namespace AdjustableCommercialConsumption
         {
             refTransferAmt = transferAmount;
             buildingAi.ModifyMaterialBuffer(buildingId, ref buildingManager.m_buildings.m_buffer[buildingId], goodsType, ref refTransferAmt);
+        }
+
+        private void ResupplyIndustrialBuilding(ushort buildingId, BuildingAI buildingAi, int transferAmount)
+        {
+            foreach (TransferManager.TransferReason type in industryGoods)
+            { ResupplyBuilding(buildingId, buildingAi, type, transferAmount); }
         }
     }
 
@@ -141,18 +213,30 @@ namespace AdjustableCommercialConsumption
 
                 if (ACC_Options.Instance.DebugConsolePrint)
                 {
-                    DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Added/Old Total/Total/Reads/New: "
+                    DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Com - Added/Old Total/Total/Reads/New: "
                         + string.Format("{0:n0}", GoodsMonitor.GoodsReplenishAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.GoodsOldTotalAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.GoodsTotalAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.GoodsReadAmount) + "/"
-                        + string.Format("{0:n0}", GoodsMonitor.GoodsNewAmount));
+                        + string.Format("{0:n0}", GoodsMonitor.GoodsNewAmount) + "\n"
+                        
+                        + "ACC - Ind - Added/Old Total/Total/Reads/New: "
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsReplenishAmount) + "/"
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsOldTotalAmount) + "/"
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsTotalAmount) + "/"
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsReadAmount) + "/"
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsNewAmount));
 
                     GoodsMonitor.GoodsReplenishAmount = 0;
                     GoodsMonitor.GoodsOldTotalAmount = 0;
                     GoodsMonitor.GoodsTotalAmount = 0;
                     GoodsMonitor.GoodsReadAmount = 0;
                     GoodsMonitor.GoodsNewAmount = 0;
+                    GoodsMonitor.indGoodsReplenishAmount = 0;
+                    GoodsMonitor.indGoodsOldTotalAmount = 0;
+                    GoodsMonitor.indGoodsTotalAmount = 0;
+                    GoodsMonitor.indGoodsReadAmount = 0;
+                    GoodsMonitor.indGoodsNewAmount = 0;
                 }
             }
         }
