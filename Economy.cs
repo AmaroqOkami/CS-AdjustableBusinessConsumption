@@ -7,10 +7,12 @@ using UnityEngine;
 
 namespace AdjustableCommercialConsumption
 {
+
     public class GoodsMonitor : ThreadingExtensionBase
     {
         private readonly BuildingManager buildingManager;
         private readonly SimulationManager simulationManager;
+        private readonly LoadingManager loadingManager;
         private CoTimer debugTimerIns;
 
         private static Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
@@ -27,6 +29,7 @@ namespace AdjustableCommercialConsumption
               TransferManager.TransferReason.Lumber };
 
         private static bool hasStarted = false;
+        public static bool startDelayed = false;
         private int refTransferAmt = 0;
 
         public static int GoodsReplenishAmount = 0;
@@ -46,18 +49,21 @@ namespace AdjustableCommercialConsumption
         {
             buildingManager = Singleton<BuildingManager>.instance;
             simulationManager = Singleton<SimulationManager>.instance;
+            loadingManager = Singleton<LoadingManager>.instance;
+
             debugTimerIns = Singleton<CoTimer>.instance;
         }
 
         public override void OnAfterSimulationTick()
         {
-            if (!hasStarted)
+            if (startDelayed)
+            { GoodsCheck(); }
+            else if (!hasStarted && loadingManager.m_loadingComplete)
             {
                 hasStarted = true;
-                debugTimerIns.StartCoroutine("DebugTimer");
+                debugTimerIns.StartCoroutine("DelayTimer");
             }
 
-            GoodsCheck();
         }
 
         public void GoodsCheck()
@@ -219,7 +225,7 @@ namespace AdjustableCommercialConsumption
                         + string.Format("{0:n0}", GoodsMonitor.GoodsTotalAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.GoodsReadAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.GoodsNewAmount) + "\n"
-                        
+
                         + "ACC - Ind - Added/Old Total/Total/Reads/New: "
                         + string.Format("{0:n0}", GoodsMonitor.indGoodsReplenishAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.indGoodsOldTotalAmount) + "/"
@@ -238,6 +244,20 @@ namespace AdjustableCommercialConsumption
                     GoodsMonitor.indGoodsReadAmount = 0;
                     GoodsMonitor.indGoodsNewAmount = 0;
                 }
+            }
+        }
+
+        private IEnumerator DelayTimer()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(5.0f);
+
+                GoodsMonitor.startDelayed = true;
+                DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Initialized.");
+
+                this.StartCoroutine("DebugTimer");
+                this.StopCoroutine("DelayTimer");
             }
         }
     }
