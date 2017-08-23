@@ -7,18 +7,15 @@ using UnityEngine;
 
 namespace AdjustableCommercialConsumption
 {
-
     public class GoodsMonitor : ThreadingExtensionBase
     {
         private readonly BuildingManager buildingManager;
         private readonly SimulationManager simulationManager;
-        private readonly LoadingManager loadingManager;
-        public static CoTimer debugTimerIns;
 
-        public static Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
-        public static Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
+        private Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
+        private Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
 
-        public static readonly TransferManager.TransferReason[] industryGoods =
+        private readonly TransferManager.TransferReason[] industryGoods =
             { TransferManager.TransferReason.Oil,
               TransferManager.TransferReason.Coal,
               TransferManager.TransferReason.Grain,
@@ -28,7 +25,6 @@ namespace AdjustableCommercialConsumption
               TransferManager.TransferReason.Food,
               TransferManager.TransferReason.Lumber };
 
-        public static bool hasStarted = false;
         public static bool startDelayed = false;
         private int refTransferAmt = 0;
 
@@ -49,21 +45,12 @@ namespace AdjustableCommercialConsumption
         {
             buildingManager = Singleton<BuildingManager>.instance;
             simulationManager = Singleton<SimulationManager>.instance;
-            loadingManager = Singleton<LoadingManager>.instance;
-
-            debugTimerIns = Singleton<CoTimer>.instance;
         }
 
         public override void OnAfterSimulationTick()
         {
             if (startDelayed)
             { GoodsCheck(); }
-            else if (!hasStarted && loadingManager.m_loadingComplete)
-            {
-                hasStarted = true;
-                debugTimerIns.StartCoroutine("DelayTimer");
-            }
-
         }
 
         public void GoodsCheck()
@@ -262,22 +249,25 @@ namespace AdjustableCommercialConsumption
         }
     }
 
-    public class Unloader : LoadingExtensionBase
+    public class ACCLoader : LoadingExtensionBase
     {
-        public Unloader()
-        { }
+        private CoTimer accTimerIns;
+
+        public ACCLoader()
+        { accTimerIns = Singleton<CoTimer>.instance; }
 
         public override void OnLevelUnloading()
         {
-            GoodsMonitor.hasStarted = false;
             GoodsMonitor.startDelayed = false;
-
-            GoodsMonitor.comGoodsCount = new Dictionary<ushort, int>();
-            GoodsMonitor.indGoodsCount = new Dictionary<ushort, int>();
-
-            GoodsMonitor.debugTimerIns.StopCoroutine("DebugTimer");
+            accTimerIns.StopCoroutine("DebugTimer");
 
             DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Deinitialized.");
+        }
+
+        public override void OnLevelLoaded(LoadMode mode)
+        {
+            if (mode == LoadMode.LoadGame || mode == LoadMode.NewGame || mode == LoadMode.NewGameFromScenario)
+            { accTimerIns.StartCoroutine("DelayTimer"); }
         }
     }
 }
