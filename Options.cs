@@ -25,6 +25,7 @@ namespace AdjustableCommercialConsumption
 
         public float CommercialGoodsMultiplier;
         public float IndustrialGoodsMultiplier;
+        public float delayTimer;
 
         public bool pauseRefillEnable;
         public bool DebugConsolePrint;
@@ -34,6 +35,7 @@ namespace AdjustableCommercialConsumption
         {
             CommercialGoodsMultiplier = 1;
             IndustrialGoodsMultiplier = 1;
+            delayTimer = 5;
             pauseRefillEnable = true;
             DebugConsolePrint = false;
             refillBuildingsEnable = false;

@@ -13,10 +13,10 @@ namespace AdjustableCommercialConsumption
         private readonly BuildingManager buildingManager;
         private readonly SimulationManager simulationManager;
         private readonly LoadingManager loadingManager;
-        private CoTimer debugTimerIns;
+        public static CoTimer debugTimerIns;
 
-        private static Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
-        private static Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
+        public static Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
+        public static Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
 
         public static readonly TransferManager.TransferReason[] industryGoods =
             { TransferManager.TransferReason.Oil,
@@ -28,7 +28,7 @@ namespace AdjustableCommercialConsumption
               TransferManager.TransferReason.Food,
               TransferManager.TransferReason.Lumber };
 
-        private static bool hasStarted = false;
+        public static bool hasStarted = false;
         public static bool startDelayed = false;
         private int refTransferAmt = 0;
 
@@ -251,7 +251,7 @@ namespace AdjustableCommercialConsumption
         {
             while (true)
             {
-                yield return new WaitForSeconds(5.0f);
+                yield return new WaitForSeconds(ACC_Options.Instance.delayTimer);
 
                 GoodsMonitor.startDelayed = true;
                 DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Initialized.");
@@ -259,6 +259,25 @@ namespace AdjustableCommercialConsumption
                 this.StartCoroutine("DebugTimer");
                 this.StopCoroutine("DelayTimer");
             }
+        }
+    }
+
+    public class Unloader : LoadingExtensionBase
+    {
+        public Unloader()
+        { }
+
+        public override void OnLevelUnloading()
+        {
+            GoodsMonitor.hasStarted = false;
+            GoodsMonitor.startDelayed = false;
+
+            GoodsMonitor.comGoodsCount = new Dictionary<ushort, int>();
+            GoodsMonitor.indGoodsCount = new Dictionary<ushort, int>();
+
+            GoodsMonitor.debugTimerIns.StopCoroutine("DebugTimer");
+
+            DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Deinitialized.");
         }
     }
 }

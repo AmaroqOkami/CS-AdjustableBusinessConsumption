@@ -21,6 +21,7 @@ namespace AdjustableCommercialConsumption
 
         private UISlider comRateSlider;
         private UISlider indRateSlider;
+        private UISlider delayTimerSlider;
         public void OnSettingsUI(UIHelperBase helper)
         {
             UIHelperBase group = helper.AddGroup("General Options");
@@ -34,6 +35,9 @@ namespace AdjustableCommercialConsumption
 
 
             group = helper.AddGroup("Performance Options");
+
+            delayTimerSlider = (UISlider)group.AddSlider("Start delay", 1f, 10f, 1f, ACC_Options.Instance.delayTimer, delayTimerOnSlider);
+            delayTimerSlider.tooltip = "Sets the delay timer for when the mod starts up, in seconds.\nUseful for balancing on-save-load effectiveness and mod stability.\n\nCurrent Delay: " + string.Format("{0:n0}", ACC_Options.Instance.delayTimer) + " seconds";
 
             checkbox = (UICheckBox)group.AddCheckbox("Refill while paused", ACC_Options.Instance.pauseRefillEnable, EnablePauseRefill);
             checkbox.tooltip = "Allows you to choose if you want the building consumption cycling to run while the simulation is paused.\n May very slightly reduce performance while paused, in exchange for a more consistent effect overall.";
@@ -62,6 +66,14 @@ namespace AdjustableCommercialConsumption
             ACC_Options.Instance.Save();
 
             indRateSlider.tooltip = "Sets the percentage of goods consumed by industrial\n buildings during production, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.IndustrialGoodsMultiplier * 100) + "%";
+        }
+
+        private void delayTimerOnSlider(float slid)
+        {
+            ACC_Options.Instance.delayTimer = slid;
+            ACC_Options.Instance.Save();
+
+            delayTimerSlider.tooltip = "Sets the initialization delay timer when the mod starts up, in seconds.\nUseful to balance starting effectiveness and mod stability..\n\nCurrent Delay: " + string.Format("{0:n0}", ACC_Options.Instance.delayTimer) + " seconds";
         }
 
         private void EnablePauseRefill(bool enabled)
