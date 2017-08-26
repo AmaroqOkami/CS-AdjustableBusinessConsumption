@@ -11,10 +11,6 @@ namespace AdjustableCommercialConsumption
     {
         private readonly BuildingManager buildingManager;
         private readonly SimulationManager simulationManager;
-
-        private Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
-        private Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
-
         private readonly TransferManager.TransferReason[] industryGoods =
             { TransferManager.TransferReason.Oil,
               TransferManager.TransferReason.Coal,
@@ -24,6 +20,9 @@ namespace AdjustableCommercialConsumption
               TransferManager.TransferReason.Ore,
               TransferManager.TransferReason.Food,
               TransferManager.TransferReason.Lumber };
+
+        private Dictionary<ushort, int> comGoodsCount = new Dictionary<ushort, int>();
+        private Dictionary<ushort, int> indGoodsCount = new Dictionary<ushort, int>();
 
         public static bool startDelayed = false;
         private int refTransferAmt = 0;
@@ -49,6 +48,8 @@ namespace AdjustableCommercialConsumption
 
         public override void OnAfterSimulationTick()
         {
+            base.OnAfterSimulationTick();
+
             if (startDelayed)
             { GoodsCheck(); }
         }
@@ -243,8 +244,8 @@ namespace AdjustableCommercialConsumption
                 GoodsMonitor.startDelayed = true;
                 DebugOutputPanel.AddMessage(ColossalFramework.Plugins.PluginManager.MessageType.Message, "ACC - Initialized.");
 
-                this.StartCoroutine("DebugTimer");
-                this.StopCoroutine("DelayTimer");
+                StartCoroutine("DebugTimer");
+                StopCoroutine("DelayTimer");
             }
         }
     }
@@ -258,6 +259,8 @@ namespace AdjustableCommercialConsumption
 
         public override void OnLevelUnloading()
         {
+            base.OnLevelUnloading();
+
             GoodsMonitor.startDelayed = false;
             accTimerIns.StopCoroutine("DebugTimer");
 
@@ -266,8 +269,12 @@ namespace AdjustableCommercialConsumption
 
         public override void OnLevelLoaded(LoadMode mode)
         {
+            base.OnLevelLoaded(mode);
+
             if (mode == LoadMode.LoadGame || mode == LoadMode.NewGame || mode == LoadMode.NewGameFromScenario)
-            { accTimerIns.StartCoroutine("DelayTimer"); }
+            {
+                accTimerIns.StartCoroutine("DelayTimer");
+            }
         }
     }
 }
