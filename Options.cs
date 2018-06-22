@@ -24,6 +24,7 @@ namespace AdjustableCommercialConsumption
         }
 
         public float CommercialGoodsMultiplier;
+        public float HighCommercialGoodsMultiplier;
         public float IndustrialGoodsMultiplier;
         public float delayTimer;
 
@@ -33,6 +34,7 @@ namespace AdjustableCommercialConsumption
 
         public ACC_Options()
         {
+            HighCommercialGoodsMultiplier = 1;
             CommercialGoodsMultiplier = 1;
             IndustrialGoodsMultiplier = 1;
             delayTimer = 5;

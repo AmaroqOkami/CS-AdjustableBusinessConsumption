@@ -20,18 +20,22 @@ namespace AdjustableCommercialConsumption
         #region Options UI
 
         private UISlider comRateSlider;
+        private UISlider highComRateSlider;
         private UISlider indRateSlider;
         private UISlider delayTimerSlider;
         public void OnSettingsUI(UIHelperBase helper)
         {
-            UIHelperBase group = helper.AddGroup("General Options");
+            UIHelperBase group = helper.AddGroup("Consumption Amounts");
             UICheckBox checkbox;
 
-            comRateSlider = (UISlider)group.AddSlider("Commercial consumption", 0f, 2f, 0.05f, ACC_Options.Instance.CommercialGoodsMultiplier, CommercialGoodsMultiplierOnSlider);
-            comRateSlider.tooltip = "Sets the percentage of goods consumed by citizens when\n visiting a commercial building, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.CommercialGoodsMultiplier * 100) +"%";
+            comRateSlider = (UISlider)group.AddSlider("Commercial", 0f, 2f, 0.05f, ACC_Options.Instance.CommercialGoodsMultiplier, CommercialGoodsMultiplierOnSlider);
+            comRateSlider.tooltip = "Sets the percentage of goods consumed by citizens when\nvisiting a commercial building, from the base amount.\nAffects all non-high-density commercial buildings.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.CommercialGoodsMultiplier * 100) +"%";
 
-            indRateSlider = (UISlider)group.AddSlider("Industrial consumption", 0f, 2f, 0.05f, ACC_Options.Instance.IndustrialGoodsMultiplier, IndustrialGoodsMultiplierOnSlider);
-            indRateSlider.tooltip = "Sets the percentage of goods consumed by industrial\n buildings during production, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.IndustrialGoodsMultiplier * 100) + "%";
+            highComRateSlider = (UISlider)group.AddSlider("High-Density Commercial", 0f, 2f, 0.05f, ACC_Options.Instance.HighCommercialGoodsMultiplier, HighCommercialGoodsMultiplierOnSlider);
+            highComRateSlider.tooltip = "Sets the percentage of goods consumed by citizens when visiting\na high-density commercial building, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.HighCommercialGoodsMultiplier * 100) + "%";
+
+            indRateSlider = (UISlider)group.AddSlider("Industrial", 0f, 2f, 0.05f, ACC_Options.Instance.IndustrialGoodsMultiplier, IndustrialGoodsMultiplierOnSlider);
+            indRateSlider.tooltip = "Sets the percentage of goods consumed by industrial\nbuildings during production, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", ACC_Options.Instance.IndustrialGoodsMultiplier * 100) + "%";
 
 
             group = helper.AddGroup("Performance Options");
@@ -40,7 +44,7 @@ namespace AdjustableCommercialConsumption
             delayTimerSlider.tooltip = "Sets the delay timer for when the mod starts up, in seconds.\nUseful for balancing on-save-load effectiveness and mod stability.\n\nCurrent Delay: " + string.Format("{0:n0}", ACC_Options.Instance.delayTimer) + " seconds";
 
             checkbox = (UICheckBox)group.AddCheckbox("Refill while paused", ACC_Options.Instance.pauseRefillEnable, EnablePauseRefill);
-            checkbox.tooltip = "Allows you to choose if you want the building consumption cycling to run while the simulation is paused.\n May very slightly reduce performance while paused, in exchange for a more consistent effect overall.";
+            checkbox.tooltip = "Allows you to choose if you want the building consumption cycling to run while the simulation is paused.\nMay very slightly reduce performance while paused, in exchange for a more consistent effect overall.";
 
 
             group = helper.AddGroup("Debug/Reset Options");
@@ -58,6 +62,14 @@ namespace AdjustableCommercialConsumption
             ACC_Options.Instance.Save();
 
             comRateSlider.tooltip = "Sets the percentage of goods consumed by citizens when\n visiting a commercial building, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", slid * 100) + "%";
+        }
+
+        private void HighCommercialGoodsMultiplierOnSlider(float slid)
+        {
+            ACC_Options.Instance.HighCommercialGoodsMultiplier = slid;
+            ACC_Options.Instance.Save();
+
+            highComRateSlider.tooltip = "Sets the percentage of goods consumed by citizens when\n visiting a high-density commercial building, from the base amount.\n\nCurrent Rate: " + string.Format("{0:n0}", slid * 100) + "%";
         }
 
         private void IndustrialGoodsMultiplierOnSlider(float slid)

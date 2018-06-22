@@ -39,6 +39,8 @@ namespace AdjustableCommercialConsumption
         public static int indGoodsReadAmount = 0;
         public static int indGoodsNewAmount = 0;
 
+        public static int highComBuildingCount = 0;
+
 
         public GoodsMonitor()
         {
@@ -84,10 +86,20 @@ namespace AdjustableCommercialConsumption
 
                         if (!ACC_Options.Instance.refillBuildingsEnable && comGoodsCount.TryGetValue(buildingId, out int oldAmount))
                         {
-                            if (ACC_Options.Instance.CommercialGoodsMultiplier != 1.0f && amount < oldAmount)
+                            //Check if the commercial building is high-density, and adjust accordingly.
+                            float comMult;
+                            if (info.GetSubService() == ItemClass.SubService.CommercialHigh)
+                            {
+                                comMult = ACC_Options.Instance.HighCommercialGoodsMultiplier;
+                                highComBuildingCount++;
+                            }
+                            else
+                            { comMult = ACC_Options.Instance.CommercialGoodsMultiplier; }
+
+                            if (comMult != 1.0f && amount < oldAmount)
                             {
                                 int amountDelta = amount - oldAmount;
-                                addAmount = System.Math.Abs(amountDelta) + (int)(amountDelta * ACC_Options.Instance.CommercialGoodsMultiplier);
+                                addAmount = System.Math.Abs(amountDelta) + (int)(amountDelta * comMult);
 
                                 ResupplyBuilding(buildingId, ai, TransferManager.TransferReason.Goods, addAmount);
 
@@ -219,7 +231,11 @@ namespace AdjustableCommercialConsumption
                         + string.Format("{0:n0}", GoodsMonitor.indGoodsOldTotalAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.indGoodsTotalAmount) + "/"
                         + string.Format("{0:n0}", GoodsMonitor.indGoodsReadAmount) + "/"
-                        + string.Format("{0:n0}", GoodsMonitor.indGoodsNewAmount));
+                        + string.Format("{0:n0}", GoodsMonitor.indGoodsNewAmount) + "\n\n"
+                        
+                        + "ACC - Building Type Detection\nHi-D Com: "
+                        + string.Format("{0:n0}", GoodsMonitor.highComBuildingCount));
+
 
                     GoodsMonitor.GoodsReplenishAmount = 0;
                     GoodsMonitor.GoodsOldTotalAmount = 0;
@@ -231,6 +247,7 @@ namespace AdjustableCommercialConsumption
                     GoodsMonitor.indGoodsTotalAmount = 0;
                     GoodsMonitor.indGoodsReadAmount = 0;
                     GoodsMonitor.indGoodsNewAmount = 0;
+                    GoodsMonitor.highComBuildingCount = 0;
                 }
             }
         }
